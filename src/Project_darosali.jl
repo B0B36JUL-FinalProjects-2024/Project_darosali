@@ -85,18 +85,24 @@ categorical_features = [
 
 train_data = onehotencode(train_data, categorical_features)
 test_data = onehotencode(test_data, categorical_features)
+missing_cols = setdiff(names(train_data), names(test_data))
+for col in missing_cols
+    test_data[!, col] .= 0  # Add column with zeros
+end
+
 numerical_cols = [
     :age, :fnlwgt, :education_num, :capital_gain,
     :capital_loss, :hours_per_week
 ]
 train_data = normalize_columns!(train_data, numerical_cols)
 test_data = normalize_columns!(test_data, numerical_cols)
-
-
-sum(test_data[!, :income])
+test_data = test_data[:, names(train_data)] 
+print(names(train_data))
+print(names(test_data))
+sum(train_data[!, :income])
 train_data[!, :income] = train_data[!, :income] .== " >50K"
 test_data[!, :income] = test_data[!, :income] .== " >50K."
-
+test_data
 CSV.write("data/adult/train_processed.csv", train_data)
 CSV.write("data/adult/test_processed.csv", test_data)
 
@@ -105,3 +111,4 @@ X_train = Matrix(train_data[:, Not(target)])
 y_train = train_data[:, target]
 X_test = Matrix(test_data[:, Not(target)])
 y_test = test_data[:, target]
+
