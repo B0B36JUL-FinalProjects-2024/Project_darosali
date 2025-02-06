@@ -1,7 +1,7 @@
 name = "LatentSpaceClustering"
 uuid = "c92263ef-9e1a-4154-83a4-96e0fb32107a"
 authors = ["Alina Daroshka"]
-version = "1.0.0-DEV"
+version = "1.0.0"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
