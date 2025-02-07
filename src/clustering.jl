@@ -1,31 +1,29 @@
-module clustering
 export k_meanspp, k_means, random_sample
 
-using Random, Statistics, Test
+using Statistics, Random
 
+"""
+Picks randomly a sample based on the sample weights.
+
+:param weights: Vector of sample weights
+:return idx:    index of chosen sample
+"""
 function random_sample(weights::Vector{<:Real})
-    """
-    Picks randomly a sample based on the sample weights.
-
-    :param weights: Vector of sample weights
-    :return idx:    index of chosen sample
-    """
     weights_norm = cumsum(weights / sum(weights))
     rand_value = rand()
     idx = first(searchsorted(weights_norm, rand_value))
     return idx
 end
 
-# k-means++ initialization
-function k_meanspp(x::Matrix{<:Real}, k::Int)
-    """
-    Performs k-means++ initialization for k-means clustering.
+"""
+Performs k-means++ initialization for k-means clustering.
 
-    :param x:       Feature vectors, Matrix (dim, number_of_vectors)
-    :param k:       Number of clusters
-    
-    :return centroids: Proposed centroids for k-means initialization
-    """
+:param x:       Feature vectors, Matrix (dim, number_of_vectors)
+:param k:       Number of clusters
+
+:return centroids: Proposed centroids for k-means initialization
+"""
+function k_meanspp(x::Matrix{<:Real}, k::Int)
     Random.seed!(0)
     n_vectors = size(x, 2)
     if k > n_vectors
@@ -52,20 +50,19 @@ function k_meanspp(x::Matrix{<:Real}, k::Int)
     return centroids
 end
 
+"""
+Implementation of the k-means clustering algorithm.
+
+:param x:          feature vectors, Matrix (dim, number_of_vectors)
+:param k:          required number of clusters, scalar
+:param max_iter:   stopping criterion: max. number of iterations
+:param init_means: (optional) initial cluster prototypes, Matrix (dim, k)
+
+:return cluster_labels: Vector{Int}, cluster index for each feature vector
+:return centroids:      Matrix (dim, k), cluster centroids
+:return sq_dists:       Vector{Float64}, squared distances to the nearest centroid for each feature vector
+"""
 function k_means(x::Matrix{<:Real}, k::Int, max_iter::Int; init_means::Union{Matrix{<:Real}, Nothing}=nothing)
-    """
-    Implementation of the k-means clustering algorithm.
-
-    :param x:          feature vectors, Matrix (dim, number_of_vectors)
-    :param k:          required number of clusters, scalar
-    :param max_iter:   stopping criterion: max. number of iterations
-    :param show:       (optional) boolean switch to turn on/off visualization of partial results
-    :param init_means: (optional) initial cluster prototypes, Matrix (dim, k)
-
-    :return cluster_labels: Vector{Int}, cluster index for each feature vector
-    :return centroids:      Matrix (dim, k), cluster centroids
-    :return sq_dists:       Vector{Float64}, squared distances to the nearest centroid for each feature vector
-    """
     Random.seed!(0)
     n_vectors = size(x, 2)
     cluster_labels = zeros(Int, n_vectors)
@@ -103,5 +100,4 @@ function k_means(x::Matrix{<:Real}, k::Int, max_iter::Int; init_means::Union{Mat
     end
 
     return cluster_labels[:], centroids, sq_dists[:]
-end
 end
