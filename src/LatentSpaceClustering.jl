@@ -1,7 +1,7 @@
 module LatentSpaceClustering
 
 include("vae.jl")
-export build_encoder, build_decoder, vae_loss, reparameterize, reconsrtuct
+export build_encoder, build_decoder, vae_loss, reparameterize, reconstruct
 
 include("clustering.jl")
 export k_meanspp, k_means, random_sample
