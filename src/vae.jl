@@ -1,4 +1,4 @@
-export build_encoder, build_decoder, train_vae, vae_loss, reparameterize, reconsrtuct
+export build_encoder, build_decoder, train_vae, vae_loss, reparameterize, reconstruct
 using Flux, Statistics
 using Flux: DataLoader, logitbinarycrossentropy
 
