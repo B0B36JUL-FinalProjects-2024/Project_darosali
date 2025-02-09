@@ -21,10 +21,10 @@ using Random
 end
 
 @testset "K-means++ Initialization" begin
-    #Random.seed!(0)
+    strategy = Kmeanspp()
     x = randn(2, 10)  # 10 2-dimensional points
     k = 3
-    centroids = k_meanspp(x, k)
+    centroids = init_centroids(strategy, x, k)
 
     # Test the correct number of centroids
     @test size(centroids, 2) == k
@@ -35,42 +35,30 @@ end
     end
 
     k_large = 15
-    @test_throws BoundsError k_meanspp(x, k_large)  # Ensure failure when k > n_vectors
+    @test_throws BoundsError init_centroids(strategy, x, k_large)  # Ensure failure when k > n_vectors
 end
 
 @testset "k_means tests" begin
-    #Random.seed!(0)
+    strategy = Rand()
     x = rand(2, 10)  # 2D points, 10 samples
     k = 3
     max_iter = 100
-    cluster_labels, centroids, sq_dists = k_means(x, k, max_iter)
+    cluster_labels, centroids, sq_dists = k_means(strategy, x, k, max_iter)
 
     @test length(cluster_labels) == size(x, 2)  # Correct number of cluster labels
     @test all(1 <= lbl <= k for lbl in cluster_labels)  # Valid cluster assignments
     @test size(centroids) == (2, k)  # Correct centroid dimensions
     @test length(sq_dists) == size(x, 2)  # Correct distance vector size
 
-    # Check deterministic results with fixed seed
-    Random.seed!(0)
-    cluster_labels_2, centroids_2, sq_dists_2 = k_means(x, k, max_iter)
-    @test cluster_labels == cluster_labels_2
-    @test centroids ≈ centroids_2
-    @test sq_dists ≈ sq_dists_2
-
     # Test: Single point dataset
     x_single = ones(2, 1)  # One 2D point
     k_single = 1
-    cluster_labels_single, centroids_single, sq_dists_single = k_means(x_single, k_single, max_iter)
+    cluster_labels_single, centroids_single, sq_dists_single = k_means(strategy, x_single, k_single, max_iter)
     
     @test cluster_labels_single == [1]  # Should assign the only point to cluster 1
     @test centroids_single == x_single  # Centroid should be the point itself
     @test sq_dists_single == [0.0]  # Distance should be 0
 
-    # Test: Non-random initialization
-    init_means = x[:, 1:k]  # First `k` points as initial means
-    cluster_labels_init, centroids_init, sq_dists_init = k_means(x, k, max_iter; init_means=init_means)
-
-    @test all(1 <= lbl <= k for lbl in cluster_labels_init)  # Ensure valid cluster assignments
 end
 
 

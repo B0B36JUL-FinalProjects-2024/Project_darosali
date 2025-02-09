@@ -1,30 +1,39 @@
-export k_meanspp, k_means, random_sample
+export init_centroids, k_means, random_sample, Rand, Kmeanspp
 
 using Statistics, Random
 
-"""
-Picks randomly a sample based on the sample weights.
+abstract type InitStrategy end
 
-:param weights: Vector of sample weights
-:return idx:    index of chosen sample
+struct Rand <: InitStrategy end
+struct Kmeanspp <: InitStrategy end
+
+
 """
-function random_sample(weights::Vector{<:Real})
-    weights_norm = cumsum(weights / sum(weights))
-    rand_value = rand()
-    idx = first(searchsorted(weights_norm, rand_value))
-    return idx
+Randomly selects `k` initial centroids from the dataset for k-means clustering.
+
+## Arguments
+- `x`: Feature matrix of size (dimensions, number_of_samples).
+- `k`: Number of clusters (centroids) to initialize.
+
+## Returns
+- `Matrix{<:Real}`: A matrix of size (dimensions, k) containing the selected centroids.
+"""
+function init_centroids(::Rand, x::Matrix{<:Real}, k::Int)
+    n_vectors = size(x, 2)
+    return x[:, randperm(n_vectors)[1:k]]
 end
 
 """
 Performs k-means++ initialization for k-means clustering.
 
-:param x:       Feature vectors, Matrix (dim, number_of_vectors)
-:param k:       Number of clusters
+## Arguments
+- `x`: Feature vectors, Matrix (dim, number_of_vectors)
+- `k`: Number of clusters
 
-:return centroids: Proposed centroids for k-means initialization
+## Returns
+- `centroids`: Proposed centroids for k-means initialization
 """
-function k_meanspp(x::Matrix{<:Real}, k::Int)
-    Random.seed!(0)
+function init_centroids(::Kmeanspp, x::Matrix{<:Real}, k::Int)
     n_vectors = size(x, 2)
     if k > n_vectors
         throw(BoundsError("k ($k) cannot be greater than the number of data points ($n_vectors)"))
@@ -51,29 +60,43 @@ function k_meanspp(x::Matrix{<:Real}, k::Int)
 end
 
 """
+Picks a random sample based on the given sample weights.
+
+## Arguments
+- `weights`: Vector of sample weights
+
+## Returns
+- `idx`: Index of the chosen sample
+"""
+function random_sample(weights::Vector{<:Real})
+    weights_norm = cumsum(weights / sum(weights))
+    rand_value = rand()
+    idx = first(searchsorted(weights_norm, rand_value))
+    return idx
+end
+
+"""
 Implementation of the k-means clustering algorithm.
 
-:param x:          feature vectors, Matrix (dim, number_of_vectors)
-:param k:          required number of clusters, scalar
-:param max_iter:   stopping criterion: max. number of iterations
-:param init_means: (optional) initial cluster prototypes, Matrix (dim, k)
+## Arguments
+- `strategy`: Initialization strategy, an object of type `InitStrategy` (e.g., `Rand`, `Kmeanspp`).
+- `x`: Feature vectors, Matrix (dim, number_of_vectors).
+- `k`: Required number of clusters, scalar.
+- `max_iter`: Maximum number of iterations for convergence.
 
-:return cluster_labels: Vector{Int}, cluster index for each feature vector
-:return centroids:      Matrix (dim, k), cluster centroids
-:return sq_dists:       Vector{Float64}, squared distances to the nearest centroid for each feature vector
+## Returns
+- `cluster_labels`: Vector{Int}, cluster index for each feature vector.
+- `centroids`: Matrix (dim, k), cluster centroids.
+- `sq_dists`: Vector{Float64}, squared distances to the nearest centroid for each feature vector.
 """
-function k_means(x::Matrix{<:Real}, k::Int, max_iter::Int; init_means::Union{Matrix{<:Real}, Nothing}=nothing)
-    Random.seed!(0)
+function k_means(strategy::InitStrategy, x::Matrix{<:Real}, k::Int, max_iter::Int)
     n_vectors = size(x, 2)
     cluster_labels = zeros(Int, n_vectors)
     sq_dists = zeros(Float64, n_vectors)
 
+
     # Initialize centroids
-    centroids = if init_means === nothing
-        x[:, randperm(n_vectors)[1:k]]  # Randomly select k points from x
-    else
-        init_means
-    end
+    centroids = init_centroids(strategy, x, k)
 
     for i_iter in 1:max_iter
         # Compute distances between points and centroids
